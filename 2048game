@@ -1,1 +1,53 @@
-#
+# Minesweeper
+# By Calvin Probst calvin.probst@gmail.com
+# https://github.com/calvinProbstSchool/probstChapter3work
+# 32, 4
+
+import random
+import pygame
+import sys
+from pygame.locals import *
+
+FPS = 30
+BOARDSIZE = 4
+NEWNUMBERS = (2, 4)
+WINNINGNUMBER = 2048
+BOXSIZE = 100
+GAPSIZE = 30
+WINDOWSIZE = GAPSIZE + (GAPSIZE + BOXSIZE) * BOXSIZE + 100
+
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+BRIGHTBLUE = (0, 50, 255)
+DARKTURQUOISE = (3, 54, 73)
+GREEN = (0, 204, 0)
+
+BGCOLOR = DARKTURQUOISE
+BOXCOLOR = GREEN
+TEXTCOLOR = BLACK
+SCORETEXT = WHITE
+
+def main():
+    global DISPLAYSURF, FPSCLOCK, BOXFONT, SCOREFONT
+    pygame.init()
+    pygame.mixer_music.load("Alcazar.mp3")
+    pygame.mixer_music.play(-1, 0.0)
+    FPSCLOCK = pygame.time.Clock()
+    DISPLAYSURF = pygame.display.set_mode((WINDOWSIZE, WINDOWSIZE))
+
+    mousex = 0
+    mousey = 0
+
+    board = []
+    for x in range(BOARDSIZE):
+        row = []
+        for y in range(BOARDSIZE):
+            row.append([0])
+        board.append(row)
+
+    playingGame = True
+
+    while True:
+        print("ayy")
+
+
