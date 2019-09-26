@@ -6,6 +6,7 @@
 import random
 import pygame
 import sys
+import math
 from pygame.locals import *
 
 FPS = 30
@@ -23,7 +24,8 @@ DARKTURQUOISE = (3, 54, 73)
 GREEN = (0, 204, 0)
 
 BGCOLOR = DARKTURQUOISE
-BOXCOLOR = GREEN
+BOXCOLOR1 = BRIGHTBLUE
+BOXCOLOR2 = DARKTURQUOISE
 TEXTCOLOR = BLACK
 SCORETEXT = WHITE
 
@@ -48,6 +50,50 @@ def main():
     playingGame = True
 
     while True:
-        print("ayy")
+        drawGameBoard()
 
 
+def drawGameBoard(board, score, highscore):
+    for x in range(BOARDSIZE):
+        for y in range(BOARDSIZE):
+            drawTile(board[x][y], boardToCoord(x), boardToCoord(y))
+
+
+def drawTile(tile, x, y):
+    pygame.display.drawRect(DISPLAYSURF, getColorValue(tile), (x, y, BOXSIZE, BOXSIZE))
+
+
+
+def getColorValue(tileValue):
+    step = math.log(tileValue, 2) - 1
+    colorR = BOXCOLOR1[0] + int(step * ((BOXCOLOR2[0] - BOXCOLOR1[0]) / 10 ))
+    colorG = BOXCOLOR1[1] + int(step * ((BOXCOLOR2[1] - BOXCOLOR1[1]) / 10 ))
+    colorB = BOXCOLOR1[2] + int(step * ((BOXCOLOR2[2] - BOXCOLOR1[2]) / 10))
+    colorFinal = (colorR, colorB, colorG)
+    return (colorFinal)
+
+
+def boardToCoord(num):
+    return GAPSIZE + num * (GAPSIZE + BOXSIZE)
+
+
+def coordToBoard(num):
+    if num < GAPSIZE:
+        return -1
+    overlap = (num - GAPSIZE) % (BOXSIZE + GAPSIZE)
+    if overlap > BOXSIZE:
+        return -1
+    else:
+        return (num - overlap) / (BOXSIZE + GAPSIZE)
+
+
+def newTile(board):
+    tileProb = random.randint(1, 10)
+    if tileProb == 1:
+        tileVal = 4
+    else:
+        tileVal = 2
+    placed = False
+    while not placed:
+        posX = random.randint(0, BOARDSIZE - 1)
+        posY = random.randint(0, BOARDSIZE - 1)
