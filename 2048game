@@ -10,6 +10,7 @@ import math
 from pygame.locals import *
 
 FPS = 30
+ANIMATIONSPEED = 5
 ROWSIZE = 4
 NEWNUMBERS = (2, 4)
 WINNINGNUMBER = 2048
@@ -18,6 +19,11 @@ GAPSIZE = 30
 TEXTGAP = 100
 WINDOWSIZE = GAPSIZE + (GAPSIZE + BOXSIZE) * BOXSIZE + 2 * TEXTGAP
 BOARDSIZE = GAPSIZE + (GAPSIZE + BOXSIZE) * BOXSIZE
+
+DIRUP = "UP"
+DIRRIGHT = "RIGHT"
+DIRDOWN = "DOWN"
+DIRLEFT = "LEFT"
 
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
@@ -40,11 +46,6 @@ def main():
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURF = pygame.display.set_mode((WINDOWSIZE, WINDOWSIZE))
     BOXFONT = pygame.font.SysFont("3Dventure.ttf", 60)
-
-
-    mousex = 0
-    mousey = 0
-
     board = []
     for x in range(ROWSIZE):
         row = []
@@ -53,17 +54,31 @@ def main():
         board.append(row)
 
     playingGame = True
+    mousex = 0
+    mousey = 0
 
     while True:
-        drawGameBoard()
+        if playingGame:
+            drawGameBoard()
+        pygame.display.update()
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
+            elif event.type == KEYUP:
+                if event.key == K_LEFT:
+                    print("left")
+                elif event.key == K_RIGHT:
+                    print("left")
+                elif event.key == K_UP:
+                    print("left")
+                elif event.key == K_DOWN:
+                    print("left")
             elif event.type == MOUSEMOTION:
                 mousex, mousey = event.pos
             elif event.type == MOUSEBUTTONUP:
                 mousex, mousey = event.pos
+
 
 
 def drawGameBoard(board, score, highscore):
@@ -80,24 +95,27 @@ def drawBoardBase():
 
 def drawTile(tile, x, y):
     pygame.draw.rect(DISPLAYSURF, getColorValue(tile), (x, y, BOXSIZE, BOXSIZE))
-    BOXFONT.render_to(DISPLAYSURF, (boardtoCenterCoord(x), boardtoCenterCoord(y)), str(tile), True, BLACK)
+    BOXFONT.render_to(DISPLAYSURF, ((x + (BOXSIZE / 2)), (y + (BOXSIZE / 2))), str(tile), True, TEXTCOLOR)
 
 
 
 def getColorValue(tileValue):
-    step = math.log(tileValue, 2) - 1
-    colorR = BOXCOLOR1[0] + int(step * ((BOXCOLOR2[0] - BOXCOLOR1[0]) / 10 ))
-    colorG = BOXCOLOR1[1] + int(step * ((BOXCOLOR2[1] - BOXCOLOR1[1]) / 10 ))
-    colorB = BOXCOLOR1[2] + int(step * ((BOXCOLOR2[2] - BOXCOLOR1[2]) / 10))
-    colorFinal = (colorR, colorB, colorG)
-    return (colorFinal)
+    if tileValue == 0:
+        return BOARDBGCOLOR
+    else:
+        step = math.log(tileValue, 2) - 1
+        colorR = BOXCOLOR1[0] + int(step * ((BOXCOLOR2[0] - BOXCOLOR1[0]) / 10 ))
+        colorG = BOXCOLOR1[1] + int(step * ((BOXCOLOR2[1] - BOXCOLOR1[1]) / 10 ))
+        colorB = BOXCOLOR1[2] + int(step * ((BOXCOLOR2[2] - BOXCOLOR1[2]) / 10))
+        colorFinal = (colorR, colorB, colorG)
+        return (colorFinal)
 
 
 def boardToCoord(num):
     return TEXTGAP + GAPSIZE + num * (GAPSIZE + BOXSIZE)
 
 
-def boardtoCenterCoord(num):
+def boardToCenterCoord(num):
     return boardToCoord(num) + BOXSIZE / 2
 
 
@@ -109,6 +127,29 @@ def coordToBoard(num):
         return -1
     else:
         return (num - overlap - GAPSIZE - TEXTGAP) / (BOXSIZE + GAPSIZE)
+
+
+def chaChaSlideAnimation(tileVal, startX, startY, moveDir):
+    travelDistance = BOXSIZE + GAPSIZE
+    stepSizeX = int(travelDistance / ANIMATIONSPEED)
+    stepSizeY = int(travelDistance / ANIMATIONSPEED)
+    if moveDir == DIRUP:
+        stepSizeX = 0
+        stepSizeY = -1 * stepSizeY
+    elif moveDir == DIRDOWN:
+        stepSizeX = 0
+    elif moveDir == DIRLEFT:
+        stepSizeX = -1 * stepSizeX
+        stepSizeY = 0
+    elif moveDir == DIRRIGHT:
+        stepSizeY = 0
+    for step in range(ANIMATIONSPEED):
+        drawTile(tileVal, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
+        pygame.display.update()
+        FPSCLOCK.tick(FPS)
+        drawTile(0, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
+
+
 
 
 def newTile(board):
