@@ -4,6 +4,8 @@
 # 32, 4
 
 import random
+from typing import Tuple
+
 import pygame
 import sys
 import math
@@ -34,7 +36,7 @@ GREEN = (0, 204, 0)
 BGCOLOR = DARKTURQUOISE
 BOARDBGCOLOR = BLACK
 BOXCOLOR1 = BRIGHTBLUE
-BOXCOLOR2 = GREEN
+BOXCOLOR2: Tuple[int, int, int] = GREEN
 TEXTCOLOR = BLACK
 SCORETEXT = WHITE
 
@@ -53,31 +55,64 @@ def main():
             row.append([0])
         board.append(row)
 
+    score = 0
+    highscore = 0
+
+    drawGameBoard(board, score, highscore)
+
+    undoButton = BOXFONT.render("Undo", False, TEXTCOLOR, BOXCOLOR2)
+    ngButton = BOXFONT.render("New Game", False, TEXTCOLOR, BOXCOLOR2)
+
+    undoPos = (WINDOWSIZE - (TEXTGAP / 2), (WINDOWSIZE / 2) + 50)
+    ngPos = (WINDOWSIZE - (TEXTGAP / 2), (WINDOWSIZE / 2) - 50)
+
+    DISPLAYSURF.blit(undoButton, undoPos)
+    DISPLAYSURF.blit(ngButton, ngPos)
+
+    undoRect = undoButton.get_rect()
+    undoRect.left, undoRect.top = undoPos
+    ngRect = ngButton.get_rect()
+    ngRect.left, ngRect.top = ngPos
+
     playingGame = True
     mousex = 0
     mousey = 0
 
+
     while True:
-        if playingGame:
-            drawGameBoard()
+        mouseDown = False
+        keyPress = False
+        keyDir = ""
+        drawGameBoard(board, score, highscore)
+
+        #do the button blit here
+
         pygame.display.update()
+
         for event in pygame.event.get():
             if event.type == QUIT or (event.type == KEYUP and event.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
             elif event.type == KEYUP:
                 if event.key == K_LEFT:
-                    print("left")
+                    keyPress = True
+                    keyDir = DIRLEFT
                 elif event.key == K_RIGHT:
-                    print("left")
+                    keyPress = True
+                    keyDir = DIRRIGHT
                 elif event.key == K_UP:
-                    print("left")
+                    keyPress = True
+                    keyDir = DIRUP
                 elif event.key == K_DOWN:
-                    print("left")
+                    keyPress = True
+                    keyDir = DIRDOWN
             elif event.type == MOUSEMOTION:
                 mousex, mousey = event.pos
             elif event.type == MOUSEBUTTONUP:
                 mousex, mousey = event.pos
+                mouseDown = True
+
+        if mouseDown:
 
 
 
@@ -129,7 +164,7 @@ def coordToBoard(num):
         return (num - overlap - GAPSIZE - TEXTGAP) / (BOXSIZE + GAPSIZE)
 
 
-def chaChaSlideAnimation(tileVal, startX, startY, moveDir):
+def chaChaSlideAnimation(tileVal, startX, startY, moveDir, reverse=False):
     travelDistance = BOXSIZE + GAPSIZE
     stepSizeX = int(travelDistance / ANIMATIONSPEED)
     stepSizeY = int(travelDistance / ANIMATIONSPEED)
@@ -144,6 +179,8 @@ def chaChaSlideAnimation(tileVal, startX, startY, moveDir):
     elif moveDir == DIRRIGHT:
         stepSizeY = 0
     for step in range(ANIMATIONSPEED):
+        if reverse:
+            drawTile(tileVal, startX, startY)
         drawTile(tileVal, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
         pygame.display.update()
         FPSCLOCK.tick(FPS)
