@@ -17,10 +17,10 @@ ROWSIZE = 4
 NEWNUMBERS = (2, 4)
 WINNINGNUMBER = 2048
 BOXSIZE = 100
-GAPSIZE = 30
+GAPSIZE = 3
 TEXTGAP = 100
-WINDOWSIZE = GAPSIZE + (GAPSIZE + BOXSIZE) * BOXSIZE + 2 * TEXTGAP
-BOARDSIZE = GAPSIZE + (GAPSIZE + BOXSIZE) * BOXSIZE
+WINDOWSIZE = GAPSIZE + (GAPSIZE + BOXSIZE) * ROWSIZE + 2 * TEXTGAP
+BOARDSIZE = GAPSIZE + (GAPSIZE + BOXSIZE) * ROWSIZE
 
 DIRUP = "UP"
 DIRRIGHT = "RIGHT"
@@ -33,51 +33,49 @@ BRIGHTBLUE = (0, 50, 255)
 DARKTURQUOISE = (3, 54, 73)
 GREEN = (0, 204, 0)
 
-BGCOLOR = DARKTURQUOISE
-BOARDBGCOLOR = BLACK
+BGCOLOR = BRIGHTBLUE
+BOARDBGCOLOR = DARKTURQUOISE
 BOXCOLOR1 = BRIGHTBLUE
 BOXCOLOR2: Tuple[int, int, int] = GREEN
 TEXTCOLOR = BLACK
 SCORETEXT = WHITE
 
+
 def main():
     global DISPLAYSURF, FPSCLOCK, BOXFONT, SCOREFONT
     pygame.init()
-    pygame.mixer_music.load("Alcazar.mp3")
+    pygame.mixer_music.load("theMessage.mp3")
     pygame.mixer_music.play(-1, 0.0)
     FPSCLOCK = pygame.time.Clock()
     DISPLAYSURF = pygame.display.set_mode((WINDOWSIZE, WINDOWSIZE))
-    BOXFONT = pygame.font.SysFont("3Dventure.ttf", 60)
-    board = []
-    for x in range(ROWSIZE):
-        row = []
-        for y in range(ROWSIZE):
-            row.append([0])
-        board.append(row)
+    BOXFONT = pygame.font.Font("3Dventure.ttf", 30)
+    board = newBoard()
 
     score = 0
     highscore = 0
-
+    DISPLAYSURF.fill(BGCOLOR)
+    pygame.draw.rect(DISPLAYSURF, BOARDBGCOLOR, (TEXTGAP, TEXTGAP, BOARDSIZE, BOARDSIZE))
+    pygame.display.update()
     drawGameBoard(board, score, highscore)
 
     undoButton = BOXFONT.render("Undo", False, TEXTCOLOR, BOXCOLOR2)
     ngButton = BOXFONT.render("New Game", False, TEXTCOLOR, BOXCOLOR2)
-
-    undoPos = (WINDOWSIZE - (TEXTGAP / 2), (WINDOWSIZE / 2) + 50)
-    ngPos = (WINDOWSIZE - (TEXTGAP / 2), (WINDOWSIZE / 2) - 50)
+    undoW, undoH = undoButton.get_size()
+    ngW, ngH = ngButton.get_size()
+    undoPos = ((WINDOWSIZE * 2 / 3) - undoW / 2, WINDOWSIZE - (TEXTGAP / 2) - ngH / 2)
+    ngPos = ((WINDOWSIZE / 3) - ngW / 2, WINDOWSIZE - (TEXTGAP / 2) - ngH / 2)
 
     DISPLAYSURF.blit(undoButton, undoPos)
     DISPLAYSURF.blit(ngButton, ngPos)
 
     undoRect = undoButton.get_rect()
-    undoRect.left, undoRect.top = undoPos
-    ngRect = ngButton.get_rect()
-    ngRect.left, ngRect.top = ngPos
+    ngRect = pygame.rect.Rect()
 
     playingGame = True
+    firstMove = True
+
     mousex = 0
     mousey = 0
-
 
     while True:
         mouseDown = False
@@ -85,7 +83,7 @@ def main():
         keyDir = ""
         drawGameBoard(board, score, highscore)
 
-        #do the button blit here
+        # do the button blit here
 
         pygame.display.update()
 
@@ -113,6 +111,22 @@ def main():
                 mouseDown = True
 
         if mouseDown:
+            if undoRect.collidepoint(mousex, mousey):
+                print("undo")
+            elif ngRect.collidepoint(mousex, mousey):
+                pygame.quit()
+                main()
+
+
+def newBoard():
+    board = []
+    for x in range(ROWSIZE):
+        row = []
+        for y in range(ROWSIZE):
+            row.append(0)
+        board.append(row)
+    board = newTile(board)
+    return board
 
 
 
@@ -120,8 +134,12 @@ def drawGameBoard(board, score, highscore):
     for x in range(ROWSIZE):
         for y in range(ROWSIZE):
             drawTile(board[x][y], boardToCoord(x), boardToCoord(y))
-    BOXFONT.render_to(DISPLAYSURF, (WINDOWSIZE / 3, TEXTGAP / 2), "Score:" + str(score), True, BLACK)
-    BOXFONT.render_to(DISPLAYSURF, (WINDOWSIZE * 2 / 3, TEXTGAP / 2), "Highscore: " + str(highscore), True, BLACK)
+    scoreLabel = BOXFONT.render("Score:" + str(score), True, BLACK)
+    scoreW, scoreH = scoreLabel.get_size()
+    DISPLAYSURF.blit(scoreLabel, (WINDOWSIZE / 3 - scoreW / 2, TEXTGAP / 2 - scoreH / 2))
+    highLabel = BOXFONT.render("Highscore: " + str(highscore), True, BLACK)
+    highW, highH = highLabel.get_size()
+    DISPLAYSURF.blit(highLabel, (WINDOWSIZE * 2 / 3 - highW / 2, TEXTGAP / 2 - highH / 2))
 
 
 def drawBoardBase():
@@ -130,17 +148,17 @@ def drawBoardBase():
 
 def drawTile(tile, x, y):
     pygame.draw.rect(DISPLAYSURF, getColorValue(tile), (x, y, BOXSIZE, BOXSIZE))
-    BOXFONT.render_to(DISPLAYSURF, ((x + (BOXSIZE / 2)), (y + (BOXSIZE / 2))), str(tile), True, TEXTCOLOR)
-
+    tileLabel = BOXFONT.render(str(tile), True, TEXTCOLOR)
+    DISPLAYSURF.blit(tileLabel, ((x + (BOXSIZE / 2)), (y + (BOXSIZE / 2))))
 
 
 def getColorValue(tileValue):
     if tileValue == 0:
-        return BOARDBGCOLOR
+        return BLACK
     else:
         step = math.log(tileValue, 2) - 1
-        colorR = BOXCOLOR1[0] + int(step * ((BOXCOLOR2[0] - BOXCOLOR1[0]) / 10 ))
-        colorG = BOXCOLOR1[1] + int(step * ((BOXCOLOR2[1] - BOXCOLOR1[1]) / 10 ))
+        colorR = BOXCOLOR1[0] + int(step * ((BOXCOLOR2[0] - BOXCOLOR1[0]) / 10))
+        colorG = BOXCOLOR1[1] + int(step * ((BOXCOLOR2[1] - BOXCOLOR1[1]) / 10))
         colorB = BOXCOLOR1[2] + int(step * ((BOXCOLOR2[2] - BOXCOLOR1[2]) / 10))
         colorFinal = (colorR, colorB, colorG)
         return (colorFinal)
@@ -187,8 +205,6 @@ def chaChaSlideAnimation(tileVal, startX, startY, moveDir, reverse=False):
         drawTile(0, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
 
 
-
-
 def newTile(board):
     tileProb = random.randint(1, 10)
     if tileProb == 1:
@@ -203,3 +219,6 @@ def newTile(board):
             board[posX][posY] = tileVal
             placed = True
     return board
+
+
+main()
