@@ -30,13 +30,14 @@ DIRLEFT = "LEFT"
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BRIGHTBLUE = (0, 50, 255)
+TILECOLOR1 = (244, 52, 105)
+TILECOLOR2 = (180, 218, 85)
 DARKTURQUOISE = (3, 54, 73)
-GREEN = (0, 204, 0)
 
 BGCOLOR = BRIGHTBLUE
 BOARDBGCOLOR = DARKTURQUOISE
-BOXCOLOR1 = BRIGHTBLUE
-BOXCOLOR2: Tuple[int, int, int] = GREEN
+BOXCOLOR1 = TILECOLOR1
+BOXCOLOR2 = TILECOLOR2
 TEXTCOLOR = BLACK
 SCORETEXT = WHITE
 
@@ -69,10 +70,18 @@ def main():
     DISPLAYSURF.blit(ngButton, ngPos)
 
     undoRect = undoButton.get_rect()
-    ngRect = pygame.rect.Rect()
+    ngRect = ngButton.get_rect()
+
+    undoRect.left, undoRect.top, = undoPos
+    ngRect.left, ngRect.top, = ngPos
+
+    print(str(undoRect))
+    print(str(undoPos))
+    print(str(ngPos))
+    print(str(ngRect))
 
     playingGame = True
-    firstMove = True
+    firstMove = False #True
 
     mousex = 0
     mousey = 0
@@ -111,11 +120,48 @@ def main():
                 mouseDown = True
 
         if mouseDown:
-            if undoRect.collidepoint(mousex, mousey):
+            if undoRect.collidepoint(mousex, mousey) and not firstMove and playingGame:
                 print("undo")
             elif ngRect.collidepoint(mousex, mousey):
-                pygame.quit()
+                print("new game boys")
                 main()
+        elif keyPress and playingGame and not keyDir == "":
+            board, score = changeBoard(board, score, keyDir)
+
+
+def changeBoard(board, score, dir):
+    oldBoard = board
+    changedTiles = []
+    for x in range(ROWSIZE):
+        row = []
+        for y in range(ROWSIZE):
+            row.append(False)
+        changedTiles.append(row)
+    startX = 0
+    startY = 0
+    endX = ROWSIZE
+    endY = ROWSIZE
+    offsetX = 0
+    offsetY = 0
+    if dir == DIRDOWN:
+        offsetY = 1
+        endY -= 1
+    elif dir == DIRUP:
+        offsetY = -1
+        startY += 1
+    elif dir == DIRRIGHT:
+        offsetX = 1
+        endX -= 1
+    elif dir == DIRLEFT:
+        offsetX = -1
+        startX += 1
+    for x in range(startX, endX):
+        for y in range(startY, endY):
+            if board[x][y] == board[x + offsetX][y + offsetY] and not changedTiles[x][y]:
+                board[x + offsetX][y + offsetY] = 2 * board[x][y]
+
+
+
 
 
 def newBoard():
