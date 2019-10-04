@@ -30,8 +30,8 @@ DIRLEFT = "LEFT"
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 BRIGHTBLUE = (0, 50, 255)
-TILECOLOR1 = (244, 52, 105)
-TILECOLOR2 = (180, 218, 85)
+TILECOLOR1 = (180, 218, 85)
+TILECOLOR2 = (244, 32, 105)
 DARKTURQUOISE = (3, 54, 73)
 
 BGCOLOR = BRIGHTBLUE
@@ -130,41 +130,19 @@ def main():
 
 
 def changeBoard(board, score, dir):
-    oldBoard = board
     changedTiles = []
     for x in range(ROWSIZE):
         row = []
         for y in range(ROWSIZE):
             row.append(False)
         changedTiles.append(row)
-    startX = 0
-    startY = 0
-    endX = ROWSIZE
-    endY = ROWSIZE
-    offsetX = 0
-    offsetY = 0
-    if dir == DIRDOWN:
-        offsetY = 1
-        endY -= 1
-    elif dir == DIRUP:
-        offsetY = -1
-        startY += 1
-    elif dir == DIRRIGHT:
-        offsetX = 1
-        endX -= 1
-    elif dir == DIRLEFT:
-        offsetX = -1
-        startX += 1
-    for x in range(startX, endX):
-        for y in range(startY, endY):
-            if board[x][y] == board[x + offsetX][y + offsetY] and not changedTiles[x][y]:
-                board[x + offsetX][y + offsetY] = 2 * board[x][y]
-
-
+    if dir == DIRRIGHT:
 
 
 
 def newBoard():
+    return [[0, 2, 4, 8], [16, 32, 64, 128], [256, 512, 1024, 2048], [0, 0, 0, 0]]
+
     board = []
     for x in range(ROWSIZE):
         row = []
@@ -175,11 +153,20 @@ def newBoard():
     return board
 
 
+def drawBlankGameBoard():
+    pygame.draw.rect(DISPLAYSURF, BOARDBGCOLOR, (TEXTGAP, TEXTGAP, BOARDSIZE, BOARDSIZE))
 
-def drawGameBoard(board, score, highscore):
+
+def drawGameBoard(board, score, highscore, omitXVals, omitYVals):
+    drawBlankGameBoard()
     for x in range(ROWSIZE):
         for y in range(ROWSIZE):
-            drawTile(board[x][y], boardToCoord(x), boardToCoord(y))
+            drawThis = True
+            for i in range(len(omitXVals)):
+                if x == omitXVals[i] and y == omitYVals[i]:
+                    drawThis = False
+            if drawThis:
+                drawTile(board[x][y], boardToCoord(x), boardToCoord(y))
     scoreLabel = BOXFONT.render("Score:" + str(score), True, BLACK)
     scoreW, scoreH = scoreLabel.get_size()
     DISPLAYSURF.blit(scoreLabel, (WINDOWSIZE / 3 - scoreW / 2, TEXTGAP / 2 - scoreH / 2))
@@ -195,7 +182,8 @@ def drawBoardBase():
 def drawTile(tile, x, y):
     pygame.draw.rect(DISPLAYSURF, getColorValue(tile), (x, y, BOXSIZE, BOXSIZE))
     tileLabel = BOXFONT.render(str(tile), True, TEXTCOLOR)
-    DISPLAYSURF.blit(tileLabel, ((x + (BOXSIZE / 2)), (y + (BOXSIZE / 2))))
+    tileTextW, tileTextH = tileLabel.get_size()
+    DISPLAYSURF.blit(tileLabel, ((x + (BOXSIZE / 2) - tileTextW / 2), (y + (BOXSIZE / 2) - tileTextH / 2)))
 
 
 def getColorValue(tileValue):
@@ -204,8 +192,8 @@ def getColorValue(tileValue):
     else:
         step = math.log(tileValue, 2) - 1
         colorR = BOXCOLOR1[0] + int(step * ((BOXCOLOR2[0] - BOXCOLOR1[0]) / 10))
-        colorG = BOXCOLOR1[1] + int(step * ((BOXCOLOR2[1] - BOXCOLOR1[1]) / 10))
-        colorB = BOXCOLOR1[2] + int(step * ((BOXCOLOR2[2] - BOXCOLOR1[2]) / 10))
+        colorB = BOXCOLOR1[1] + int(step * ((BOXCOLOR2[1] - BOXCOLOR1[1]) / 10))
+        colorG = BOXCOLOR1[2] + int(step * ((BOXCOLOR2[2] - BOXCOLOR1[2]) / 10))
         colorFinal = (colorR, colorB, colorG)
         return (colorFinal)
 
@@ -228,7 +216,9 @@ def coordToBoard(num):
         return (num - overlap - GAPSIZE - TEXTGAP) / (BOXSIZE + GAPSIZE)
 
 
-def chaChaSlideAnimation(tileVal, startX, startY, moveDir, reverse=False):
+def chaChaSlideAnimation(tileVal, boardX, boardY, moveDir, tilesToDraw):
+    startX = boardToCoord(boardX)
+    startY = boardToCoord(boardY)
     travelDistance = BOXSIZE + GAPSIZE
     stepSizeX = int(travelDistance / ANIMATIONSPEED)
     stepSizeY = int(travelDistance / ANIMATIONSPEED)
@@ -243,12 +233,10 @@ def chaChaSlideAnimation(tileVal, startX, startY, moveDir, reverse=False):
     elif moveDir == DIRRIGHT:
         stepSizeY = 0
     for step in range(ANIMATIONSPEED):
-        if reverse:
-            drawTile(tileVal, startX, startY)
+        drawGameBoard(board, score, highscore, [boardX], [boardY])
         drawTile(tileVal, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
         pygame.display.update()
         FPSCLOCK.tick(FPS)
-        drawTile(0, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
 
 
 def newTile(board):
@@ -266,5 +254,5 @@ def newTile(board):
             placed = True
     return board
 
-
+print(str(getColorValue(2)))
 main()
