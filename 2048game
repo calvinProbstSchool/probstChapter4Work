@@ -86,6 +86,8 @@ def main():
     mousex = 0
     mousey = 0
 
+    oldBoard = board
+
     while True:
         mouseDown = False
         keyPress = False
@@ -121,11 +123,18 @@ def main():
 
         if mouseDown:
             if undoRect.collidepoint(mousex, mousey) and not firstMove and playingGame:
-                print("undo")
+                board = oldBoard
+                drawGameBoard(board, score, highscore)
             elif ngRect.collidepoint(mousex, mousey):
-                print("new game boys")
                 main()
         elif keyPress and playingGame and not keyDir == "":
+            firstMove = False
+            oldBoard = []
+            for x in board:
+                col = []
+                for y in x:
+                    col.append(y)
+                oldBoard.append(col)
             board, score = changeBoard(board, score, keyDir)
 
 
@@ -138,7 +147,7 @@ def changeBoard(board, score, dir):
         changedTiles.append(row)
     if dir == DIRRIGHT:
         for y in range(ROWSIZE):
-            for x in range(1, ROWSIZE - 1):
+            for x in range(ROWSIZE - 1, 1, -1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRLEFT, x, y, board)
                 box = board[x][y]
                 if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
@@ -146,43 +155,66 @@ def changeBoard(board, score, dir):
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
                     changedTiles[beforeX][beforeY] = True
-        return pushBoxesIn(board, DIRRIGHT), score
+        return (pushBoxesIn(board, DIRRIGHT), score)
+    if dir == DIRDOWN:
+        for x in range(ROWSIZE):
+            for y in range(ROWSIZE - 1, 1, -1):
+                boxBefore, beforeX, beforeY = getBoxInDir(DIRUP, x, y, board)
+                box = board[x][y]
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                    board[x][y] = 0
+                    board[beforeX][beforeY] *= 2
+                    score += board[beforeX][beforeY]
+                    changedTiles[beforeX][beforeY] = True
+        return (pushBoxesIn(board, DIRDOWN), score)
+    elif dir == DIRLEFT:
+        for y in range(ROWSIZE):
+            for x in range(0, ROWSIZE - 1):
+                boxBefore, beforeX, beforeY = getBoxInDir(DIRRIGHT, x, y, board)
+                box = board[x][y]
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                    board[x][y] = 0
+                    board[beforeX][beforeY] *= 2
+                    score += board[beforeX][beforeY]
+                    changedTiles[beforeX][beforeY] = True
+        return (pushBoxesIn(board, DIRLEFT), score)
 
 
 def pushBoxesIn(board, dir):
-    if dir == DIRDOWN:
+    if dir == DIRUP:
         for x in range(ROWSIZE):
             for y in range(ROWSIZE):
                 if board[x][y] == 0:
                     for belowY in range(y + 1, ROWSIZE):
                         board[x][belowY - 1] = board[x][belowY]
                     board[x][ROWSIZE - 1] = 0
-                    return board
-    elif dir == DIRRIGHT:
+        return board
+    elif dir == DIRLEFT:
         for y in range(ROWSIZE):
-            for x in range(ROWSIZE):
+            for x in range(ROWSIZE - 1, -1, -1):
                 if board[x][y] == 0:
                     for belowX in range(x + 1, ROWSIZE):
                         board[belowX - 1][y] = board[belowX][y]
+                        chaChaSlideAnimation(board[belowX][y], belowX, y, DIRLEFT)
                     board[ROWSIZE - 1][y] = 0
-                    return board
-    elif dir == DIRUP:
+        return board
+    elif dir == DIRDOWN:
         for x in range(ROWSIZE):
             for y in range(ROWSIZE):
                 if board[x][y] == 0:
                     for belowY in range(y - 1, -1, -1):
                         board[x][belowY + 1] = board[x][belowY]
                     board[x][0] = 0
-                    return board
-    elif dir == DIRLEFT:
+        return board
+    elif dir == DIRRIGHT:
         for y in range(ROWSIZE):
             for x in range(ROWSIZE):
                 if board[x][y] == 0:
                     for belowX in range(x - 1, -1, -1):
                         board[belowX + 1][y] = board[belowX][y]
+                        chaChaSlideAnimation(board[belowX][y], belowX, y, DIRRIGHT)
                     board[0][y] = 0
-                    print(str(board))
-                    return board
+        return board
 
 
 
@@ -199,7 +231,7 @@ def getBoxInDir(dir, x, y, board):
         for lookX in range(x - 1, -1, -1):
             if not board[lookX][y] == 0:
                 return board[lookX][y], lookX, y
-    elif dir == DIRRIGHT:
+    elif dir == DIRUP:
         for lookY in range(y - 1, -1, -1):
             if not board[x][lookY] == 0:
                 return board[x][lookY], x, lookY
@@ -207,7 +239,7 @@ def getBoxInDir(dir, x, y, board):
 
 
 def newBoard():
-    return [[0, 2, 4, 8], [16, 32, 64, 128], [256, 512, 1024, 2048], [0, 0, 0, 0]]
+    return [[0, 2, 4, 8], [16, 2, 64, 128], [256, 2, 1024, 2048], [0, 0, 0, 0]]
 
     board = []
     for x in range(ROWSIZE):
@@ -220,6 +252,7 @@ def newBoard():
 
 
 def drawBlankGameBoard():
+    DISPLAYSURF.fill(BGCOLOR)
     pygame.draw.rect(DISPLAYSURF, BOARDBGCOLOR, (TEXTGAP, TEXTGAP, BOARDSIZE, BOARDSIZE))
 
 
@@ -277,7 +310,7 @@ def coordToBoard(num):
         return (num - overlap - GAPSIZE - TEXTGAP) / (BOXSIZE + GAPSIZE)
 
 
-def chaChaSlideAnimation(tileVal, boardX, boardY, moveDir, tilesToDraw):
+def chaChaSlideAnimation(tileVal, boardX, boardY, moveDir):
     startX = boardToCoord(boardX)
     startY = boardToCoord(boardY)
     travelDistance = BOXSIZE + GAPSIZE
@@ -293,8 +326,8 @@ def chaChaSlideAnimation(tileVal, boardX, boardY, moveDir, tilesToDraw):
         stepSizeY = 0
     elif moveDir == DIRRIGHT:
         stepSizeY = 0
-    for step in range(ANIMATIONSPEED):
-        drawGameBoard(board, score, highscore)
+    for step in range(ANIMATIONSPEED + 1):
+        drawTile(0, startX, startY)
         drawTile(tileVal, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
         pygame.display.update()
         FPSCLOCK.tick(FPS)
@@ -315,5 +348,4 @@ def newTile(board):
             placed = True
     return board
 
-print(str(getColorValue(2)))
 main()
