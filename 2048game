@@ -12,7 +12,7 @@ import math
 from pygame.locals import *
 
 FPS = 30
-ANIMATIONSPEED = 5
+ANIMATIONSPEED = 3
 ROWSIZE = 4
 NEWNUMBERS = (2, 4)
 WINNINGNUMBER = 2048
@@ -136,6 +136,7 @@ def main():
                     col.append(y)
                 oldBoard.append(col)
             board, score = changeBoard(board, score, keyDir)
+            board = newTile(board)
 
 
 def changeBoard(board, score, dir):
@@ -147,18 +148,20 @@ def changeBoard(board, score, dir):
         changedTiles.append(row)
     if dir == DIRRIGHT:
         for y in range(ROWSIZE):
-            for x in range(ROWSIZE - 1, 1, -1):
+            for x in range(ROWSIZE - 1, -1, -1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRLEFT, x, y, board)
                 box = board[x][y]
+                print(str(board))
+                print("row " + str(y) + "col " + str(x) + "before " + str(boxBefore))
                 if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
                     changedTiles[beforeX][beforeY] = True
-        return (pushBoxesIn(board, DIRRIGHT), score)
+        return (pushBoxesIn(board, DIRRIGHT, changedTiles), score)
     if dir == DIRDOWN:
         for x in range(ROWSIZE):
-            for y in range(ROWSIZE - 1, 1, -1):
+            for y in range(ROWSIZE - 1, -1, -1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRUP, x, y, board)
                 box = board[x][y]
                 if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
@@ -166,7 +169,7 @@ def changeBoard(board, score, dir):
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
                     changedTiles[beforeX][beforeY] = True
-        return (pushBoxesIn(board, DIRDOWN), score)
+        return (pushBoxesIn(board, DIRDOWN, changedTiles), score)
     elif dir == DIRLEFT:
         for y in range(ROWSIZE):
             for x in range(0, ROWSIZE - 1):
@@ -177,16 +180,33 @@ def changeBoard(board, score, dir):
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
                     changedTiles[beforeX][beforeY] = True
-        return (pushBoxesIn(board, DIRLEFT), score)
+        return (pushBoxesIn(board, DIRLEFT, changedTiles), score)
+    elif dir == DIRUP:
+        for x in range(ROWSIZE):
+            for y in range(0, ROWSIZE - 1):
+                boxBefore, beforeX, beforeY = getBoxInDir(DIRDOWN, x, y, board)
+                box = board[x][y]
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                    board[x][y] = 0
+                    board[beforeX][beforeY] *= 2
+                    score += board[beforeX][beforeY]
+                    changedTiles[beforeX][beforeY] = True
+        return (pushBoxesIn(board, DIRUP, changedTiles), score)
 
 
-def pushBoxesIn(board, dir):
+def pushBoxesIn(board, dir, changes):
     if dir == DIRUP:
         for x in range(ROWSIZE):
-            for y in range(ROWSIZE):
+            for y in range(ROWSIZE - 1, -1, -1):
                 if board[x][y] == 0:
                     for belowY in range(y + 1, ROWSIZE):
                         board[x][belowY - 1] = board[x][belowY]
+                        if changes[x][belowY]:
+                            changes[x][belowY] = False
+                            changes[x][belowY - 1] = True
+                            chaChaSlideAnimation(int(board[x][belowY] / 2), x, belowY, DIRUP)
+                        elif not board[x][belowY] == 0:
+                            chaChaSlideAnimation(board[x][belowY], x, belowY, DIRUP)
                     board[x][ROWSIZE - 1] = 0
         return board
     elif dir == DIRLEFT:
@@ -195,7 +215,10 @@ def pushBoxesIn(board, dir):
                 if board[x][y] == 0:
                     for belowX in range(x + 1, ROWSIZE):
                         board[belowX - 1][y] = board[belowX][y]
-                        chaChaSlideAnimation(board[belowX][y], belowX, y, DIRLEFT)
+                        if changes[belowX][y]:
+                            chaChaSlideAnimation(int(board[belowX][y] / 2), belowX, y, DIRLEFT)
+                        elif not board[belowX][y] == 0:
+                            chaChaSlideAnimation(board[belowX][y], belowX, y, DIRLEFT)
                     board[ROWSIZE - 1][y] = 0
         return board
     elif dir == DIRDOWN:
@@ -204,6 +227,12 @@ def pushBoxesIn(board, dir):
                 if board[x][y] == 0:
                     for belowY in range(y - 1, -1, -1):
                         board[x][belowY + 1] = board[x][belowY]
+                        if changes[x][belowY]:
+                            changes[x][belowY] = False
+                            changes[x][belowY + 1] = True
+                            chaChaSlideAnimation(int(board[x][belowY] / 2), x, belowY, DIRDOWN)
+                        elif not board[x][belowY] == 0:
+                            chaChaSlideAnimation(board[x][belowY], x, belowY, DIRDOWN)
                     board[x][0] = 0
         return board
     elif dir == DIRRIGHT:
@@ -212,7 +241,10 @@ def pushBoxesIn(board, dir):
                 if board[x][y] == 0:
                     for belowX in range(x - 1, -1, -1):
                         board[belowX + 1][y] = board[belowX][y]
-                        chaChaSlideAnimation(board[belowX][y], belowX, y, DIRRIGHT)
+                        if changes[belowX][y]:
+                            chaChaSlideAnimation(int(board[belowX][y] / 2), belowX, y, DIRRIGHT)
+                        elif not board[belowX][y] == 0:
+                            chaChaSlideAnimation(board[belowX][y], belowX, y, DIRRIGHT)
                     board[0][y] = 0
         return board
 
@@ -239,8 +271,6 @@ def getBoxInDir(dir, x, y, board):
 
 
 def newBoard():
-    return [[0, 2, 4, 8], [16, 2, 64, 128], [256, 2, 1024, 2048], [0, 0, 0, 0]]
-
     board = []
     for x in range(ROWSIZE):
         row = []
@@ -267,6 +297,15 @@ def drawGameBoard(board, score, highscore):
     highLabel = BOXFONT.render("Highscore: " + str(highscore), True, BLACK)
     highW, highH = highLabel.get_size()
     DISPLAYSURF.blit(highLabel, (WINDOWSIZE * 2 / 3 - highW / 2, TEXTGAP / 2 - highH / 2))
+    undoButton = BOXFONT.render("Undo", False, TEXTCOLOR, BOXCOLOR2)
+    ngButton = BOXFONT.render("New Game", False, TEXTCOLOR, BOXCOLOR2)
+    undoW, undoH = undoButton.get_size()
+    ngW, ngH = ngButton.get_size()
+    undoPos = ((WINDOWSIZE * 2 / 3) - undoW / 2, WINDOWSIZE - (TEXTGAP / 2) - ngH / 2)
+    ngPos = ((WINDOWSIZE / 3) - ngW / 2, WINDOWSIZE - (TEXTGAP / 2) - ngH / 2)
+
+    DISPLAYSURF.blit(undoButton, undoPos)
+    DISPLAYSURF.blit(ngButton, ngPos)
 
 
 def drawBoardBase():
