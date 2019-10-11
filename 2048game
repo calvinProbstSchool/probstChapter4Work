@@ -92,8 +92,14 @@ def main():
         mouseDown = False
         keyPress = False
         keyDir = ""
+        if score > highscore:
+            highscore = score
         drawGameBoard(board, score, highscore)
-        playingGame = gameCheckBoard(board)
+        if not gameCheckBoard(board):
+            playingGame = False
+
+        else:
+            playingGame = True
 
         # do the button blit here
 
@@ -153,7 +159,7 @@ def changeBoard(board, score, dir):
             for x in range(ROWSIZE - 1, -1, -1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRLEFT, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -164,7 +170,7 @@ def changeBoard(board, score, dir):
             for y in range(ROWSIZE - 1, -1, -1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRUP, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -175,7 +181,7 @@ def changeBoard(board, score, dir):
             for x in range(0, ROWSIZE - 1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRRIGHT, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -186,7 +192,7 @@ def changeBoard(board, score, dir):
             for y in range(0, ROWSIZE - 1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRDOWN, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -194,19 +200,25 @@ def changeBoard(board, score, dir):
         return (pushBoxesIn(board, DIRUP, changedTiles), score)
 
 
-def changeBoardNoAnim(board, score, dir):
+def changeBoardNoAnim(boardStaySame, score, dir):
     changedTiles = []
     for x in range(ROWSIZE):
         row = []
         for y in range(ROWSIZE):
             row.append(False)
         changedTiles.append(row)
+    board = []
+    for x in range(ROWSIZE):
+        row = []
+        for y in range(ROWSIZE):
+            row.append(boardStaySame[x][y])
+        board.append(row)
     if dir == DIRRIGHT:
         for y in range(ROWSIZE):
             for x in range(ROWSIZE - 1, -1, -1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRLEFT, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -217,7 +229,7 @@ def changeBoardNoAnim(board, score, dir):
             for y in range(ROWSIZE - 1, -1, -1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRUP, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -228,7 +240,7 @@ def changeBoardNoAnim(board, score, dir):
             for x in range(0, ROWSIZE - 1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRRIGHT, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -239,7 +251,7 @@ def changeBoardNoAnim(board, score, dir):
             for y in range(0, ROWSIZE - 1):
                 boxBefore, beforeX, beforeY = getBoxInDir(DIRDOWN, x, y, board)
                 box = board[x][y]
-                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]):
+                if box == boxBefore and (not box == 0) and (not  changedTiles[beforeX][beforeY]) and (not changedTiles[x][y]):
                     board[x][y] = 0
                     board[beforeX][beforeY] *= 2
                     score += board[beforeX][beforeY]
@@ -373,7 +385,10 @@ def newBoard():
 
 
 def gameCheckDir(board, dir):
-    if board == changeBoardNoAnim(board, 0, dir)[0]:
+    newBoard, randoScore = changeBoardNoAnim(board, 0, dir)
+    print(str(board))
+    print(str(newBoard))
+    if board == newBoard:
         return False
     else:
         return True
@@ -384,8 +399,10 @@ def gameCheckBoard(board):
     for x in range(ROWSIZE):
         for y in range(ROWSIZE):
             if not board[x][y] == 0:
-                if getBoxInDir(DIRUP, x, y, board) == board[x][y] or getBoxInDir(DIRDOWN, x, y, board)[0] == board[x][y] or getBoxInDir(DIRRIGHT, x, y, board)[0] == board[x][y] or getBoxInDir(DIRLEFT, x, y, board) == board[x][y]:
+                if getBoxInDir(DIRUP, x, y, board)[0] == board[x][y] or getBoxInDir(DIRDOWN, x, y, board)[0] == board[x][y] or getBoxInDir(DIRRIGHT, x, y, board)[0] == board[x][y] or getBoxInDir(DIRLEFT, x, y, board)[0] == board[x][y]:
                     moves = True
+            else:
+                moves = True
     return moves
 
 
