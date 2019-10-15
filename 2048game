@@ -42,7 +42,8 @@ TEXTCOLOR = BLACK
 SCORETEXT = WHITE
 
 
-def main():
+
+def main(highscore):
     global DISPLAYSURF, FPSCLOCK, BOXFONT, SCOREFONT
     pygame.init()
     pygame.mixer_music.load("theMessage.mp3")
@@ -53,7 +54,7 @@ def main():
     board = newBoard()
 
     score = 0
-    highscore = 0
+
     DISPLAYSURF.fill(BGCOLOR)
     pygame.draw.rect(DISPLAYSURF, BOARDBGCOLOR, (TEXTGAP, TEXTGAP, BOARDSIZE, BOARDSIZE))
     pygame.display.update()
@@ -133,7 +134,7 @@ def main():
                 board = oldBoard
                 drawGameBoard(board, score, highscore)
             elif ngRect.collidepoint(mousex, mousey):
-                main()
+                main(highscore)
         elif keyPress and playingGame and not keyDir == "":
             if gameCheckDir(board, keyDir):
                 firstMove = False
@@ -418,10 +419,10 @@ def drawGameBoard(board, score, highscore):
             drawTile(board[x][y], boardToCoord(x), boardToCoord(y))
     scoreLabel = BOXFONT.render("Score:" + str(score), True, BLACK)
     scoreW, scoreH = scoreLabel.get_size()
-    DISPLAYSURF.blit(scoreLabel, (WINDOWSIZE / 3 - scoreW / 2, TEXTGAP / 2 - scoreH / 2))
+    DISPLAYSURF.blit(scoreLabel, (WINDOWSIZE / 3 - scoreW / 2, TEXTGAP / 2 - scoreH))
     highLabel = BOXFONT.render("Highscore: " + str(highscore), True, BLACK)
     highW, highH = highLabel.get_size()
-    DISPLAYSURF.blit(highLabel, (WINDOWSIZE * 2 / 3 - highW / 2, TEXTGAP / 2 - highH / 2))
+    DISPLAYSURF.blit(highLabel, (WINDOWSIZE / 3 - highW / 2, TEXTGAP / 2 + highH / 2))
     undoButton = BOXFONT.render("Undo", False, TEXTCOLOR, BOXCOLOR2)
     ngButton = BOXFONT.render("New Game", False, TEXTCOLOR, BOXCOLOR2)
     undoW, undoH = undoButton.get_size()
@@ -439,14 +440,14 @@ def drawBoardBase():
 
 def drawTile(tile, x, y):
     pygame.draw.rect(DISPLAYSURF, getColorValue(tile), (x, y, BOXSIZE, BOXSIZE))
-    tileLabel = BOXFONT.render(str(tile), True, TEXTCOLOR)
+    tileLabel = BOXFONT.render(str(tile), True, BOARDBGCOLOR)
     tileTextW, tileTextH = tileLabel.get_size()
     DISPLAYSURF.blit(tileLabel, ((x + (BOXSIZE / 2) - tileTextW / 2), (y + (BOXSIZE / 2) - tileTextH / 2)))
 
 
 def getColorValue(tileValue):
     if tileValue == 0:
-        return BLACK
+        return BOARDBGCOLOR
     else:
         step = math.log(tileValue, 2) - 1
         colorR = BOXCOLOR1[0] + int(step * ((BOXCOLOR2[0] - BOXCOLOR1[0]) / 10))
@@ -480,18 +481,25 @@ def chaChaSlideAnimation(tileVal, boardX, boardY, moveDir):
     travelDistance = BOXSIZE + GAPSIZE
     stepSizeX = int(travelDistance / ANIMATIONSPEED)
     stepSizeY = int(travelDistance / ANIMATIONSPEED)
+    xGS = 0
+    yGS = 0
     if moveDir == DIRUP:
         stepSizeX = 0
         stepSizeY = -1 * stepSizeY
+        yGS = 1 * GAPSIZE
     elif moveDir == DIRDOWN:
         stepSizeX = 0
+        yGS = -1 * GAPSIZE
     elif moveDir == DIRLEFT:
         stepSizeX = -1 * stepSizeX
         stepSizeY = 0
+        xGS = 1 * GAPSIZE
     elif moveDir == DIRRIGHT:
         stepSizeY = 0
+        xGS = -1 * GAPSIZE
     for step in range(ANIMATIONSPEED + 1):
         drawTile(0, startX, startY)
+        drawTile(0, startX + xGS, startY + yGS)
         drawTile(tileVal, (startX + (stepSizeX * step)), (startY + (stepSizeY * step)))
         pygame.display.update()
         FPSCLOCK.tick(FPS)
@@ -512,4 +520,4 @@ def newTile(board):
             placed = True
     return board
 
-main()
+main(0)
