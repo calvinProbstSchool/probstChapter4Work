@@ -1,6 +1,6 @@
-# Minesweeper
+# 2048
 # By Calvin Probst calvin.probst@gmail.com
-# https://github.com/calvinProbstSchool/probstChapter3work
+# https://github.com/calvinProbstSchool/probstChapter4work
 # 32, 4
 
 import random
